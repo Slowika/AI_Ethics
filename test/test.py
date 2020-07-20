@@ -1,8 +1,9 @@
+from __future__ import print_function
 # import fasttext
-from gensim.models import KeyedVectors
-# import numpy as np
-# from sklearn.manifold import TSNE
-# import matplotlib.pyplot as plt
+from gensim.models import KeyedVectors, word2vec
+import numpy as np
+from sklearn.manifold import TSNE
+import matplotlib.pyplot as plt
 
 en_model = KeyedVectors.load_word2vec_format('wiki.en/wiki-news-300d-1M.vec')
 sw_model = KeyedVectors.load_word2vec_format('wiki.en/wiki-news-300d-1M-subword.vec')
@@ -42,3 +43,43 @@ def word_analogy(worda, wordb, wordc):
 def sw_word_analogy(worda, wordb, wordc):
     print("{} is to {} as {} is to {}".format(worda, wordb, wordc,
                                               sw_model.most_similar(negative=[worda], positive=[wordb, wordc])[0][0]))
+
+# plots the closest words to a given word
+def plot_TSNE(word, limit=200, model=en_model):
+    words = []
+    embedding = np.array([])
+    filename = 'results/tsne_{}_reg.png'.format(word)
+    vector_dim = 300
+
+    if model == 'sw':
+        model = sw_model
+        filename = 'results/tsne_{}_sw.png'.format(word)
+
+    list_words = model.most_similar(positive=[word], topn=limit)
+    words.append(word)
+    embedding = np.append(embedding, model[word])
+
+    for word in list_words:
+        words.append(word[0])
+
+        embedding = np.append(embedding, model[word[0]])
+
+    embedding = embedding.reshape(limit + 1, vector_dim)
+
+    tsne = TSNE(perplexity=30.0, n_components=2, init='pca', n_iter=5000)
+
+    low_dim_embedding = tsne.fit_transform(embedding)
+
+    assert low_dim_embedding.shape[0] >= len(words), "More labels than embeddings"
+    plt.figure(figsize=(22, 22), dpi=300)  # in inches
+    for i, label in enumerate(words):
+        x, y = low_dim_embedding[i, :]
+        plt.scatter(x, y, c='red')
+        plt.annotate(label,
+                     xy=(x, y),
+                     xytext=(5, 2),
+                     textcoords='offset points',
+                     ha='right',
+                     va='bottom')
+
+    plt.savefig(filename)
