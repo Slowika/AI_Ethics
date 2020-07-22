@@ -1,5 +1,7 @@
 # personalized ignores
 2.2
+.idea/
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
