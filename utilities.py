@@ -3,7 +3,7 @@ import numpy as np
 import numpy.linalg as la
 
 
-# Slightly modified function from the FastText documentation to add storage as vectors in numpy:
+# Function from the FastText documentation
 # https://fasttext.cc/docs/en/english-vectors.html
 def load_vectors(fname):
     """
@@ -16,8 +16,22 @@ def load_vectors(fname):
     data = {}
     for line in fin:
         tokens = line.rstrip().split(' ')
-        data[tokens[0]] = np.array(map(float, tokens[1:]))
+        data[tokens[0]] = map(float, tokens[1:])
     return data
+
+
+def load_vectors_numpy(fname):
+    fin = io.open(fname, 'r', encoding='utf-8', newline='\n', errors='ignore')
+    n, d = map(int, fin.readline().split())
+    embeddings = np.zeros((n, d))
+    words = np.array([], dtype=object)
+    index = 0
+    for line in fin:
+        tokens = line.rstrip().split(' ')
+        words = np.append(words, tokens[0])
+        embeddings[index] = np.array(list(map(float, tokens[1:])))
+        index += 1
+    return words, embeddings
 
 
 def get_unit_direction(p1, p2):
@@ -75,7 +89,7 @@ def get_projection_matrix(points, direction):
     # A dot d gives a vector of scalars
     # Dot product with the transpose of the direction to get the projections
     # The direction should be a unit vector, so there is no need to normalize.
-    return (points.dot(direction)).dot(direction.T)
+    return np.outer(points.dot(direction), direction)
 
 
 def get_orth_distance(point, direction):

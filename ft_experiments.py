@@ -1,7 +1,7 @@
 from utilities import *
 
 DEFAULT_FILTER_PARAMS = {
-    "method": "quantile",
+    "filter": "quantile",
     "threshold": 0.01
 }
 
@@ -23,10 +23,11 @@ def run_projection_experiment(words, embeddings, word1, word2, filter_params=DEF
     direction = get_unit_direction(word1, word2)
 
     projections = get_projection_matrix(embeddings, direction)
-    distances, indices = search_by_distance(embeddings, direction, method=filter_params["method"],
-                                            threshold=filter_params["threshold"])
-    if indices is not None:
-        filtered_words = words[indices]
+    distances, selector = search_by_distance(embeddings, direction, method="orth",
+                                             filter=filter_params["filter"],
+                                             threshold=filter_params["threshold"])
+    if selector is not None:
+        filtered_words = words[selector]
     else:
         filtered_words = words
 
