@@ -34,6 +34,12 @@ def load_vectors_numpy(fname):
     return words, embeddings
 
 
+def get_array_word_embedding(words, embeddings, target):
+    index = np.where(words == target)
+    if len(index) > 0:
+        index = index[0]
+    return embeddings[index, :]
+
 def get_unit_direction(p1, p2):
     """
     Returns the normalized (length 1) unit vector of the direction between p1 and p2.
@@ -89,7 +95,7 @@ def get_projection_matrix(points, direction):
     # A dot d gives a vector of scalars
     # Dot product with the transpose of the direction to get the projections
     # The direction should be a unit vector, so there is no need to normalize.
-    return np.outer(points.dot(direction), direction)
+    return np.outer(points.dot(direction), direction.T)
 
 
 def get_orth_distance(point, direction):
