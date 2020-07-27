@@ -1,7 +1,7 @@
 import io
 import numpy as np
 import numpy.linalg as la
-
+import pandas as pd
 
 # Function from the FastText documentation
 # https://fasttext.cc/docs/en/english-vectors.html
@@ -173,6 +173,26 @@ def search_by_distance(points, target, method="orth", filter="distance", thresho
         print(f"Illegal search method provided: {filter}")
 
 
+def flatten_ft_predictions(results):
+    labels, probabilities = results
+    flat_labels = [x[0] for x in labels]
+    flat_probs = np.array(probabilities).flatten()
+    return flat_labels, flat_probs
 
 
+def find_prediction_disagreement(inputs, predictions, compare_baseline=False):
+    is_diff = predictions[0] == predictions[0]
+    if compare_baseline:
+        for i in range(1, len(predictions)):
+            is_diff = ((predictions[0] == predictions[i]) & is_diff)
+        is_diff = ~is_diff
+    else:
+        for i in range(len(predictions) - 1):
+            for j in range(i, len(predictions)):
+                is_diff = (~(predictions[i] == predictions[j]) & is_diff)
 
+    if type(inputs) is list:
+        disagreements = pd.Series(inputs)[is_diff]
+    else:
+        disagreements = inputs[is_diff]
+    return disagreements, is_diff
