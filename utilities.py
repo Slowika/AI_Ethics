@@ -188,8 +188,8 @@ def find_prediction_disagreement(inputs, predictions, compare_baseline=False):
         is_diff = ~is_diff
     else:
         for i in range(len(predictions) - 1):
-            for j in range(i, len(predictions)):
-                is_diff = (~(predictions[i] == predictions[j]) & is_diff)
+            for j in range(i+1, len(predictions)):
+                is_diff = ((~(predictions[i] == predictions[j])) & is_diff)
 
     if type(inputs) is list:
         disagreements = pd.Series(inputs)[is_diff]

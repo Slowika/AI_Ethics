@@ -8,3 +8,4 @@ dependencies:
   - jupyter
   - gensim
   - scikit-learn
+  - pandas
