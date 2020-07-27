@@ -7,26 +7,26 @@ from utilities import *
 TRAINING_DEFAULTS = {
     "lr": 0.1,
     "dim": 300,
-    "epoch": 5,
+    "epoch": 50,
     "wordNgrams": 1,
 }
 
 EMBEDDING_FILENAMES = (
-    "wiki-news-300d-sample.vec",
-    "crawl-300d-sample.vec",
-    "wiki-news-300d-subword-sample.vec",
-    "crawl-300d-subword-sample.vec"
+    "wiki-news-300d.vec",
+    "crawl-300d.vec",
+    "wiki-news-300d-subword.vec",
+    "crawl-300d-subword.vec"
 )
 
 EMBEDDING_NAMES = {
-    "wiki-news-300d-sample.vec": "wiki",
-    "crawl-300d-sample.vec": "cc",
-    "wiki-news-300d-subword-sample.vec": "wiki-sub",
-    "crawl-300d-subword-sample.vec": "cc-sub"
+    "wiki-news-300d.vec": "wiki",
+    "crawl-300d.vec": "cc",
+    "wiki-news-300d-subword.vec": "wiki-sub",
+    "crawl-300d-subword.vec": "cc-sub"
 }
 
 
-def train_models(train_data_path, embedding_files=EMBEDDING_FILENAMES, params=None):
+def train_models(train_data_path, embedding_files=EMBEDDING_FILENAMES, embedding_names=None, params=None, save=True):
     """
     Function for training multiple fasttext classification models, using the same parameters and
     architecture and different word embeddings
@@ -37,18 +37,26 @@ def train_models(train_data_path, embedding_files=EMBEDDING_FILENAMES, params=No
     """
     if params is None:
         params = TRAINING_DEFAULTS
-
+    lr = params["lr"]
+    ep = params["epoch"]
+    dim = params["dim"]
+    ngrams = params["wordNgrams"]
+    fname_suffix = f"_lr{lr}_ep{ep}_d{dim}_ng{ngrams}.bin"
     models = []
     print("--------------------------------")
     print("Training baseline model.")
     baseline = ft.train_supervised(input=train_data_path, **params)
     models.append(baseline)
+    if save:
+        baseline.save_model(f"models/baseline{fname_suffix}")
 
-    for embedding in embedding_files:
+    for i in range(len(embedding_files)):
         print("--------------------------------")
-        print("Training model with embedding:", embedding)
-        m = ft.train_supervised(input=train_data_path, **params, pretrainedVectors=f"data/{embedding}")
+        print("Training model with embedding:", embedding_files[i])
+        m = ft.train_supervised(input=train_data_path, **params, pretrainedVectors=f"data/{embedding_files[i]}")
         models.append(m)
+        if save:
+            m.save_model(f"models/{embedding_names[i]}{fname_suffix}")
 
     print("--------------------------------")
     return models
@@ -145,15 +153,18 @@ if __name__ == "__main__":
 
     if not os.path.exists("results"):
         os.makedirs("results")
+    if not os.path.exists("models"):
+        os.makedirs("models")
 
     # Change params here if you like
     params = TRAINING_DEFAULTS
 
+    names = ["baseline"] + [EMBEDDING_NAMES[x] for x in embeddings]
+
     print("Training models")
-    models = train_models(train_data, embeddings, params)
+    models = train_models(train_data, embeddings, names, params)
 
     print("Getting test results")
-    names = ["baseline"] + [EMBEDDING_NAMES[x] for x in embeddings]
     test_results = test_models(test_data, models, names)
     lr = params["lr"]
     ep = params["epoch"]
@@ -161,3 +172,6 @@ if __name__ == "__main__":
     ngrams = params["wordNgrams"]
     result_fname = f"{os.getcwd()}/results/pr_scores_lr{lr}_ep{ep}_d{dim}_ng{ngrams}.csv"
     test_results.to_csv(result_fname)
+
+    print("Getting predictions")
+    get_predictions(test_data, models, names, params=params)
